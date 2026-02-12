@@ -1,5 +1,5 @@
 gradio==4.44.1
-numpy
-opencv-python-headless
-pillow
-mediapipe
+numpy==1.26.4
+opencv-python-headless==4.9.0.80
+mediapipe==0.10.11
+pillow==10.4.0
