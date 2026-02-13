@@ -1,4 +1,5 @@
 import cv2
+import os
 import gradio as gr
 
 from face_detection import detect_face_bbox
@@ -44,8 +45,5 @@ demo = gr.Interface(fn=process,inputs =gr.Image(
         ],
         title ="SmileView Simulation Demo",
         description = "SmileView Before/After preview using face detection, landmark detection, teeth segmentation and smile transform")
-demo.launch(
-    server_name="0.0.0.0",
-    server_port=int(os.environ.get("PORT", 7860)),
-    show_error=True
-)
+PORT = int(os.environ.get("PORT", 7860))
+demo.launch(server_name="0.0.0.0",server_port=PORT)
