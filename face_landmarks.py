@@ -1,43 +1,41 @@
 import os
 import urllib.request
-import numpy as np
-import cv2
 
+import cv2
+import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "face_landmarker.task")
+MODEL_PATH = os.path.join("models", "face_landmarker.task")
 
 def _ensure_model():
+    os.makedirs("models", exist_ok=True)
     if not os.path.exists(MODEL_PATH):
-        print("Downloading face_landmarker.task ...")
         urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
-        print("Downloaded:", MODEL_PATH)
+
+_ensure_model()
+
+_base = python.BaseOptions(model_asset_path=MODEL_PATH)
+_options = vision.FaceLandmarkerOptions(
+    base_options=_base,
+    output_face_blendshapes=False,
+    output_facial_transformation_matrixes=False,
+    num_faces=1
+)
+_landmarker = vision.FaceLandmarker.create_from_options(_options)
 
 class LandmarkDetector:
-    def __init__(self):
-        _ensure_model()
-        base_options = python.BaseOptions(model_asset_path=MODEL_PATH)
-        options = vision.FaceLandmarkerOptions(
-            base_options=base_options,
-            output_face_blendshapes=False,
-            output_facial_transformation_matrixes=False,
-            num_faces=1
-        )
-        self.detector = vision.FaceLandmarker.create_from_options(options)
+    def detects(self, bgr_img):
+        h, w = bgr_img.shape[:2]
+        rgb = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB)
+        image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
 
-    def detects(self, frame_bgr):
-        # MediaPipe Tasks expects RGB
-        rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-        mp_image = vision.Image(image_format=vision.ImageFormat.SRGB, data=rgb)
-
-        result = self.detector.detect(mp_image)
+        result = _landmarker.detect(image)
         if not result.face_landmarks:
             return None
 
-        # return list of landmarks similar to your old code (with .x .y)
-        return result.face_landmarks[0]
-
-    def close(self):
-        self.detector.close()
+        lm = result.face_landmarks[0]  # list of normalized landmarks
+        # return pixel coords [(x,y), ...]
+        pts = [(int(p.x * w), int(p.y * h)) for p in lm]
+        return pts
