@@ -66,5 +66,8 @@ demo = gr.Interface(
     description="SmileView Before/After preview using face detection, landmark detection, teeth segmentation and smile transform"
 )
 
-PORT = int(os.environ.get("PORT", 7860))
-demo.launch(server_name="0.0.0.0", server_port=PORT)
+demo.launch(
+    server_name="0.0.0.0",
+    server_port=int(os.environ.get("PORT", 8080)),
+    show_error=True
+)
