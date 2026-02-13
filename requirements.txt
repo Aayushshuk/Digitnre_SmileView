@@ -1,3 +1,4 @@
+--no-cache-dir
 gradio
 opencv-python-headless
 mediapipe
