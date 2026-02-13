@@ -1,22 +1,17 @@
 import cv2
-import mediapipe as mp
 
-mp_fd = mp.solutions.face_detection
+# OpenCV built-in face detector (works on servers too)
+_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
-def detect_face_bbox(frame_bgr, min_conf=0.6):
-    h, w = frame_bgr.shape[:2]
-    rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-
-    with mp_fd.FaceDetection(model_selection=1, min_detection_confidence=min_conf) as fd:
-        res = fd.process(rgb)
-
-    if not res.detections:
+def detect_face_bbox(frame_bgr):
+    """
+    Returns bbox as (x, y, w, h) or None
+    """
+    gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
+    faces = _cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80))
+    if len(faces) == 0:
         return None
 
-    det = res.detections[0]
-    bb = det.location_data.relative_bounding_box
-    x = int(max(0, bb.xmin * w))
-    y = int(max(0, bb.ymin * h))
-    bw = int(min(w - x, bb.width * w))
-    bh = int(min(h - y, bb.height * h))
-    return (x, y, bw, bh)
+    # pick largest face
+    x, y, w, h = max(faces, key=lambda r: r[2] * r[3])
+    return (int(x), int(y), int(w), int(h))
